@@ -10,8 +10,10 @@
  */
 
 #include <M5Unified.h>
+#include <SPIFFS.h>
 #include <FastLED.h> // enable FastLED (RGB LED) library.
-#include <WebServer.h>
+
+#include "dotserver.h"
 
 // Specify the number of RGB LEDs (25 for M5Atom Matrix).
 #define NUM_LEDS 25
@@ -22,7 +24,6 @@
 //uint32_t count;
 CRGB leds[NUM_LEDS];
 
-WiFiServer server(80);
 
 //const char* ssid = "**********";
 //const char* password = "**********";
@@ -56,6 +57,10 @@ void taskDeviceCtrl(void *Parameters){
 
 }
 
+/**
+ * @brief setup
+ * 
+ */
 void setup() {
   Serial.begin(115200);
   while (!Serial);
@@ -67,30 +72,29 @@ void setup() {
 
   M5.begin(cfg); // initialize M5 device, Display is also initialized
 
+  // LED setup
   FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS); // initialize RGB LEDs
   FastLED.setBrightness(10); // set the brightness (more than 20 may break due to heat.)
 
-//  WiFi.begin(ssid, password);
-  WiFi.begin();
-  Serial.print("WiFi connecting");
-
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(100);
+  // Initialize SPIFFS
+  if(!SPIFFS.begin()){
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
   }
-  Serial.println(" connected");
-
-  server.begin();
-
-  Serial.print("HTTP Server: http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
-
 
   // Core1で関数taskDeviceCtrlをstackサイズ4096,優先順位1で起動
   xTaskCreatePinnedToCore(taskDeviceCtrl, "taskDeviceCtrl", 4096, NULL, 1, NULL, 1);
 
+  // Start WiFi & WebServer
+  setWebhandle();       // Webhandle設定
+  startWiFi();          // WiFi接続開始
+  startWebserver();     // Webサーバ開始
+
 }
 
+/**
+ * @brief main loop
+ * 
+ */
 void loop() {
 }
