@@ -38,6 +38,10 @@ void taskDeviceCtrl(void *Parameters){
   unsigned long ledLasttime;
   bool ledOnOff = 0;
 
+  // LED setup
+  FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS); // initialize RGB LEDs
+  FastLED.setBrightness(10); // set the brightness (more than 20 may break due to heat.)
+
   while(1){
     timetmp = millis();               // 処理間隔確認用基本時刻
     if(timetmp - ledLasttime >500){   // 500mSecごとに実行
@@ -62,19 +66,11 @@ void taskDeviceCtrl(void *Parameters){
  * 
  */
 void setup() {
+  auto cfg = M5.config();
+  M5.begin(cfg);
+
   Serial.begin(115200);
   while (!Serial);
-
-  auto cfg = M5.config(); // assign a structure for initializing M5Stack
-  // If config is to be set, set it here
-  // Example.
-  // cfg.external_spk = true;
-
-  M5.begin(cfg); // initialize M5 device, Display is also initialized
-
-  // LED setup
-  FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS); // initialize RGB LEDs
-  FastLED.setBrightness(10); // set the brightness (more than 20 may break due to heat.)
 
   // Initialize SPIFFS
   if(!SPIFFS.begin()){
