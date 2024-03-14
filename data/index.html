@@ -20,8 +20,47 @@
         <h2>ようこそ、テスト用ページへ</h2>
         <p>ここにコンテンツを追加してください。</p>
     </main>
+    
+    <h1>WebSocket Test</h1>
+    <button onclick="connect()">Connect to WebSocket</button><br><br>
+    <input type="text" id="messageInput" placeholder="Enter message"><br>
+    <button onclick="sendMessage()">Send Message</button>
+  
     <footer>
         <p>&copy; 2024 テスト用ページ</p>
     </footer>
 </body>
+
+<script>
+    var socket;
+
+    function connect() {
+      // WebSocketサーバーに接続
+//      socket = new WebSocket("ws://192.168.3.133/ws");
+      socket = new WebSocket('ws://' + window.location.hostname + '/ws');
+
+      // 接続が確立された時の処理
+      socket.onopen = function() {
+        console.log("WebSocket connection established.");
+      };
+
+      // メッセージを受信した時の処理
+      socket.onmessage = function(event) {
+        console.log("Received message: " + event.data);
+      };
+
+      // 接続が閉じられた時の処理
+      socket.onclose = function(event) {
+        console.log("WebSocket connection closed.");
+      };
+    }
+
+    function sendMessage() {
+      var message = document.getElementById("messageInput").value;
+      // メッセージを送信
+      socket.send(message);
+      console.log("Message sent: " + message);
+    }
+  </script>
+
 </html>
