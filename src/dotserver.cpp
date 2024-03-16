@@ -14,6 +14,9 @@
 #include <ESPAsyncWebServer.h>
 #include "dotserver.h"
 
+#include <FastLED.h> // enable FastLED (RGB LED) library.
+
+
 void handleNotFound(AsyncWebServerRequest *request);  // ハンドル設定無し・要求ファイル取得
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 
@@ -117,25 +120,159 @@ void handleNotFound(AsyncWebServerRequest *request)
   }
 }
 
+extern CRGB leds[25];   // LEDオブジェクトの配列
+
+void led(int num ,JsonObject data2)
+{
+  int r = data2["r"];
+  int g = data2["g"];
+  int b = data2["b"];
+
+  leds[num] = CRGB(r, g, b);
+}
+
+void parseJsonAndPrintColors(JsonDocument& jsonDocument) {
+
+   Serial.println("-- parseJsonAndPrintColors --");
+  JsonDocument jsonDoc;
+
+  JsonArray data = jsonDocument["dataArray"];
+  Serial.println(data);
+
+  JsonVariant jsondata;
+    jsondata = jsonDocument["type"];
+    if(!jsondata.isNull()){
+      const char* dat = jsondata.as<const char*>();
+     Serial.println((char*)dat);
+    }
+
+  jsondata = jsonDocument["dataArray"];
+  if(!jsondata.isNull()){
+/*
+      serializeJsonPretty(jsondata, Serial);
+      Serial.println(); // 改行を追加
+      Serial.println(jsondata.size());
+
+      JsonObject data1;
+//      serializeJsonPretty(jsondata[0], Serial);
+      Serial.println(); // 改行を追加
+      data1 = jsondata[0];
+      Serial.println("xxx"); // 改行を追加
+      Serial.println(data1.size());
+//      serializeJsonPretty(data1[0], Serial);
+      Serial.println(); // 改行を追加
+
+
+  // JsonVariant型の変数から配列の2つめの1つめの要素を取得
+  JsonObject data2 = jsondata[0][0];
+
+  // RGB値を取得
+  int r = data2["r"];
+  int g = data2["g"];
+  int b = data2["b"];
+
+  // 取得した値をシリアルモニタに出力
+  Serial.print("RGB values for the second data array's first element: ");
+  Serial.print("R: "); Serial.print(r);
+  Serial.print(", G: "); Serial.print(g);
+  Serial.print(", B: "); Serial.println(b);
+
+  // JsonVariant型の変数から配列の2つめの1つめの要素を取得
+  data2 = jsondata[1][0];
+
+  // RGB値を取得
+   r = data2["r"];
+   g = data2["g"];
+   b = data2["b"];
+
+  // 取得した値をシリアルモニタに出力
+  Serial.print("RGB values for the second data array's first element: ");
+  Serial.print("R: "); Serial.print(r);
+  Serial.print(", G: "); Serial.print(g);
+  Serial.print(", B: "); Serial.println(b);
+*/
+/*
+  data2 = jsondata[0][0];
+  led(0 ,data2);
+
+  data2 = jsondata[0][1];
+  led(1 ,data2);
+
+  data2 = jsondata[0][2];
+  led(2 ,data2);
+
+  data2 = jsondata[0][3];
+  led(3 ,data2);
+
+  data2 = jsondata[0][4];
+  led(4 ,data2);
+*/
+  JsonObject data2; 
+  int i,j,num;
+  for(i=0;i<5;i++){
+    for(j=0;j<5;j++){
+      num = i*16+j;
+      data2 = jsondata[0][num];
+      led(i*5+j ,data2);
+    }
+  }
+
+  FastLED.show();
+
+  }
+
+}
+
+
+      String receivedData;
 // WebSocketイベントのハンドラ
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch(type) {
     case WS_EVT_CONNECT:
       Serial.println("WebSocket client connected");
+      receivedData = "";
       break;
-    case WS_EVT_DISCONNECT:
+    case WS_EVT_DISCONNECT:{
       Serial.println("WebSocket client disconnected");
+//      Serial.println(receivedData);
+
+            // ArduinoJsonのためのメモリバッファを定義
+      const size_t bufferSize = JSON_OBJECT_SIZE(10); // 10はオブジェクト内のキーの数
+      StaticJsonDocument<bufferSize> jsonDocument;
+
+      // 受信したJSONデータをパースする
+      DeserializationError error = deserializeJson(jsonDocument, receivedData);
+      if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        return;
+      }
+
+      parseJsonAndPrintColors(jsonDocument);
+
+      // パースしたデータをシリアルモニタに表示する
+    //  serializeJsonPretty(jsonDocument, Serial);
+      Serial.println(); // 改行を追加
+    }
       break;
     case WS_EVT_DATA:{
       // 受信データを std::string に変換する
-      std::string receivedData(reinterpret_cast<char*>(data), len);
+      std::string receivedData0(reinterpret_cast<char*>(data), len);
       // 受信データを処理する（ここではシリアルに出力するだけ）
-      Serial.printf("Received data: %s\n", receivedData.c_str());
+//      Serial.printf("Received data: %s\n", receivedData0.c_str());
+
+
+      for (size_t i = 0; i < len; i++) {
+        receivedData += (char)data[i];
+      }
+//      Serial.println(receivedData);
+
 
       // クライアントにデータを送信する例
       // client->text("Received your message");
-      break;
     }
+      break;
+    
     default:
       break;
   }

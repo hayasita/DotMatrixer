@@ -44,6 +44,7 @@ void taskDeviceCtrl(void *Parameters){
 
   while(1){
     timetmp = millis();               // 処理間隔確認用基本時刻
+/*
     if(timetmp - ledLasttime >500){   // 500mSecごとに実行
       ledLasttime = timetmp;
       if(ledOnOff){
@@ -55,7 +56,7 @@ void taskDeviceCtrl(void *Parameters){
       ledOnOff = !ledOnOff;
       FastLED.show(); // display LEDs
     }
-
+*/
     delay(1);
   }
 
