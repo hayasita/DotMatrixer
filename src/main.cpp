@@ -65,9 +65,8 @@ void taskDeviceCtrl(void *Parameters){
       ledLasttime = timetmp;
 
       if(!jsData.ledAllData.empty()){
-        Serial.println("jsonData::");
-
-        Serial.println(jsData.ledAllData.size());
+//        Serial.println("jsonData::");
+//        Serial.println(jsData.ledAllData.size());
 
         portENTER_CRITICAL(&jsonMutex);
         count++;

@@ -41,11 +41,6 @@ void jsonData::parseJson(JsonDocument& jsonDocument)
     }
     portEXIT_CRITICAL(&jsonMutex);
 
-//    jsonDataArray = jsondata;
-//    Serial.println(jsonDataArray.size());
-
-  //  jsData.setDataArray(jsonDataArray);
-
   }
 
   return;

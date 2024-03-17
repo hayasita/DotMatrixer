@@ -15,9 +15,6 @@
 #include "dotserver.h"
 #include "jsdata.h"
 
-//#include <FastLED.h> // enable FastLED (RGB LED) library.
-
-
 void handleNotFound(AsyncWebServerRequest *request);  // ハンドル設定無し・要求ファイル取得
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 
@@ -120,58 +117,6 @@ void handleNotFound(AsyncWebServerRequest *request)
     return;
   }
 }
-
-//extern CRGB leds[25];   // LEDオブジェクトの配列
-/*
-
-void led(int num ,JsonObject data2)
-{
-  int r = data2["r"];
-  int g = data2["g"];
-  int b = data2["b"];
-
-  leds[num] = CRGB(r, g, b);
-}
-*/
-#ifdef DELETE
-JsonVariant jsonDataArray;
-
-void parseJsonAndPrintColors(JsonDocument& jsonDocument) {
-
-   Serial.println("-- parseJsonAndPrintColors --");
-  JsonDocument jsonDoc;
-
-  JsonArray data = jsonDocument["dataArray"];
-  Serial.println(data);
-
-  JsonVariant jsondata;
-    jsondata = jsonDocument["type"];
-    if(!jsondata.isNull()){
-      const char* dat = jsondata.as<const char*>();
-     Serial.println((char*)dat);
-    }
-
-  jsonDataArray = jsonDocument["dataArray"];
-  if(!jsonDataArray.isNull()){
-    Serial.print("dataArray.size : ");
-    Serial.println(jsonDataArray.size());
-    jsData.setDataArray(jsonDataArray);
-/*
-    JsonObject data2; 
-    int i,j,num;
-    for(i=0;i<5;i++){
-      for(j=0;j<5;j++){
-        num = i*16+j;
-        data2 = jsonDataArray[0][num];
-        led(i*5+j ,data2);
-      }
-    }
-    FastLED.show();
-  */
-  }
-
-}
-#endif
 
 // WebSocketイベントのハンドラ
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
