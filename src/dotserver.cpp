@@ -142,7 +142,6 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
         return;
       }
       else{
-//        parseJsonAndPrintColors(jsonDocument);
         jsData.parseJson(jsonDocument);
       }
     }

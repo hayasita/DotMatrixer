@@ -1,8 +1,22 @@
+/**
+ * @file jsdata.cpp
+ * @author hayasita04@gmail.com
+ * @brief jsonデータ処理
+ * @version 0.1
+ * @date 2024-03-17
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 
 #include "jsdata.h"
 portMUX_TYPE jsonMutex = portMUX_INITIALIZER_UNLOCKED; // Mutex
 
-
+/**
+ * @brief JSONデータのパース
+ * 
+ * @param jsonDocument 
+ */
 void jsonData::parseJson(JsonDocument& jsonDocument)
 {
    Serial.println("-- parseJson --");
