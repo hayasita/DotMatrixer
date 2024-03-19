@@ -12,6 +12,7 @@
 #include <SPIFFS.h>
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h>
 #include "dotserver.h"
 #include "jsdata.h"
 
@@ -56,6 +57,8 @@ void startWebserver(void)
 
   // WebSocketエンドポイントを登録
   server.addHandler(&ws);
+
+  AsyncElegantOTA.begin(&server); // httpServerはAsyncWebServerのインスタンス
 
   server.begin();
   Serial.println("HTTP server started");
