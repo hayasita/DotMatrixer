@@ -7,6 +7,10 @@
 #define GLOBAL extern
 #endif
 
+#include <Arduino.h>
+#include <AsyncTCP.h>
+
+#include <ArduinoJson.h>
 
 void startWiFi(void);
 void startWebserver(void);

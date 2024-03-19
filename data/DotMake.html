@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dot Matrix Image Editor</title>
+<style>
+  .dot {
+    width: 20px;
+    height: 20px;
+    margin: 1px;
+    padding: 0px;
+    border: 1px solid #000;
+    display: inline-block;
+    background-color:#000;
+    line-height: 0px;
+    vertical-align: top;
+  }
+  .miniImageContainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .miniImage {
+    margin-right: 10px;
+    border: 1px solid #000;
+  }
+</style>
+</head>
+<body>
+  <h1>Dot Matrix Image Editor</h1>
+  <p>Click on the dots to turn them ON/OFF:</p>
+  <div id="dotMatrix">
+    <!-- Generate the 8x16 dot matrix -->
+  </div>
+  <div>
+    <input type="radio" id="redRadio" name="color" value="rgb(255, 0, 0)" checked>
+    <label for="redRadio">Red</label>
+
+    <input type="radio" id="blueRadio" name="color" value="rgb(0, 0, 255)">
+    <label for="blueRadio">Blue</label>
+
+    <input type="radio" id="greenRadio" name="color" value="rgb(0, 255, 0)">
+    <label for="greenRadio">Green</label>
+
+    <input type="radio" id="yellowRadio" name="color" value="rgb(255, 255, 0)">
+    <label for="yellowRadio">Yellow</label>
+
+    <input type="radio" id="blackRadio" name="color" value="rgb(0, 0, 0)"> <!-- Added black color radio button -->
+    <label for="blackRadio">Black</label>
+  </div>
+
+  <div>
+    <button id="okButton">OK</button>
+    <button id="insertButton">Insert</button>
+    <button id="getButton">Get</button>
+    <button id="clearButton">Clear</button>
+    <select id="miniImageSelector">
+      <option value="new" selected>New</option>
+    </select>
+  </div>
+
+  <div>
+    <button id="startButton">Start</button>
+    <button id="stopButton">Stop</button>
+    <input type="number" id="switchTimeInput" placeholder="Switch Time (0-5 seconds, in 0.5 increments)" step="0.5" min="0" max="5"> Sec
+  </div>
+  <div id="currentImageDisplay"></div>
+
+  <button id="submitButton">送信</button>
+
+  <div id="miniImages"></div>
+
+  <script>
+    const dotMatrix = document.getElementById('dotMatrix');
+    const okButton = document.getElementById('okButton');
+    const clearButton = document.getElementById('clearButton');
+    const insertButton = document.getElementById('insertButton');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const getButton = document.getElementById('getButton');
+    const switchTimeInput = document.getElementById('switchTimeInput');
+    switchTimeInput.value = 0.5;
+    const currentImageDisplay = document.getElementById('currentImageDisplay');
+    const miniImagesContainer = document.getElementById('miniImages');
+    const miniImageSelector = document.getElementById('miniImageSelector');
+    const submitButton = document.getElementById('submitButton'); // 送信ボタン
+    let imageCounter = 0;
+    let animationInterval;
+
+//    let matrixData=[];
+
+
+    function convertColorToRGB(colorString) {
+      // 色の文字列からRGB値を抽出する
+      let rgbArray = colorString.match(/\d+/g);
+      // RGB値をオブジェクトに変換する
+      let rgbObject = {
+          r: parseInt(rgbArray[0]),
+          g: parseInt(rgbArray[1]),
+          b: parseInt(rgbArray[2])
+      };
+      return rgbObject;
+    }
+
+    function createMiniatureImage(dotData) {
+      const dotSendData = [];
+      const miniImageDiv = document.createElement('div');
+      miniImageDiv.className = 'miniImageContainer';
+
+      const indexSpan = document.createElement('span');
+      indexSpan.textContent = `#${imageCounter + 1}`;
+      miniImageDiv.appendChild(indexSpan);
+
+      const miniImageCanvas = document.createElement('canvas');
+      miniImageCanvas.className = 'miniImage';
+      miniImageCanvas.width = 128;
+      miniImageCanvas.height = 64;
+      const ctx = miniImageCanvas.getContext('2d');
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 16; col++) {
+          const color = dotData[row * 16 + col];
+          ctx.fillStyle = color;
+          ctx.fillRect(col * 8, row * 8, 8, 8);
+
+          dotSendData.push(convertColorToRGB(color));
+        }
+      }
+      miniImageDiv.appendChild(miniImageCanvas);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', function() {
+        if (!animationInterval) {
+          miniImagesContainer.removeChild(miniImageDiv);
+          imageCounter--;
+          updateMiniImagesIndexes();
+          updateMiniImageSelector();
+        }
+      });
+      miniImageDiv.appendChild(deleteButton);
+
+      const jsonText = document.createElement('pre');
+      jsonText.textContent = JSON.stringify(dotSendData);
+      jsonText.style.display = 'none'; // この行を追加する
+      miniImageDiv.appendChild(jsonText);
+      miniImagesContainer.appendChild(miniImageDiv);
+      updateMiniImageSelector();
+    }
+
+    function updateMiniImagesIndexes() {
+      const miniImageContainers = document.getElementsByClassName('miniImageContainer');
+      for (let i = 0; i < miniImageContainers.length; i++) {
+        miniImageContainers[i].querySelector('span').textContent = `#${i + 1}`;
+      }
+    }
+
+    function updateMiniImageSelector() {
+      const miniImageSelectorOptions = document.querySelectorAll('#miniImageSelector option[value^="image"]');
+      miniImageSelectorOptions.forEach(option => option.parentNode.removeChild(option));
+
+      const miniImageContainers = document.getElementsByClassName('miniImageContainer');
+      for (let i = 0; i < miniImageContainers.length; i++) {
+        const option = document.createElement('option');
+        option.value = `image${i + 1}`;
+        option.textContent = `#${i + 1}`;
+        miniImageSelector.appendChild(option);
+      }
+    }
+
+    function convertImageToDotData(canvas, dotWidth, dotHeight) {
+      const ctx = canvas.getContext('2d');
+      const dotData = [];
+
+      // キャンバスの幅と高さを取得
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      // 縮小後のドットの列数と行数を計算
+      const columns = Math.floor(canvasWidth / dotWidth);
+      const rows = Math.floor(canvasHeight / dotHeight);
+
+      // 画像の左上から右下へのループ
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < columns; col++) {
+          // ドットの色情報を取得
+          const imageData = ctx.getImageData(col * dotWidth, row * dotHeight, dotWidth, dotHeight).data;
+
+          // ドットの色情報をJSON形式に変換し、配列に追加
+          const dotColor = { r: imageData[0], g: imageData[1], b: imageData[2] };
+          dotData.push(dotColor);
+        }
+      }
+
+      return dotData;
+    }
+
+    okButton.addEventListener('click', function() {
+      if (!animationInterval) {
+        const dotData = [];
+        const dots = document.getElementsByClassName('dot');
+//        console.log(dots[0].style.backgroundColor)
+        for (let i = 0; i < dots.length; i++) {
+          const color = dots[i].style.backgroundColor;
+          dotData.push(color);
+
+//          const rgbObject = convertColorToRGB(color);
+//          console.log(rgbObject); // { r: 255, g: 255, b: 255 } 
+        }
+        const selectedIndex = miniImageSelector.selectedIndex;
+        if (selectedIndex === 0) {
+          createMiniatureImage(dotData);
+          imageCounter++;
+        } else {
+          const miniImageIndex = selectedIndex - 1;
+          const miniImageContainer = document.querySelectorAll('.miniImageContainer')[miniImageIndex];
+          const miniImageCanvas = miniImageContainer.querySelector('canvas');
+          const ctx = miniImageCanvas.getContext('2d');
+          for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 16; col++) {
+              const color = dotData[row * 16 + col];
+              ctx.fillStyle = color;
+              ctx.fillRect(col * 8, row * 8, 8, 8);
+            }
+          }
+        }
+
+        updateMiniImagesIndexes();
+        updateMiniImageSelector();
+      }
+    });
+
+    clearButton.addEventListener('click', function() {
+      if (!animationInterval) {
+        const dots = document.getElementsByClassName('dot');
+        for (let i = 0; i < dots.length; i++) {
+          dots[i].style.backgroundColor = 'rgb(0, 0, 0)';
+        }
+      }
+    });
+
+    insertButton.addEventListener('click', function() {
+      if (!animationInterval) {
+        const selectedIndex = miniImageSelector.selectedIndex;
+        if (selectedIndex === 0) {
+          alert('Please select a miniature image to insert after.');
+          return;
+        }
+        const dotData = [];
+        const dots = document.getElementsByClassName('dot');
+        for (let i = 0; i < dots.length; i++) {
+          const color = dots[i].style.backgroundColor;
+          dotData.push(color);
+        }
+        const miniImageIndex = selectedIndex - 1;
+        const miniImageContainer = document.querySelectorAll('.miniImageContainer')[miniImageIndex];
+        const newMiniImageDiv = document.createElement('div');
+        newMiniImageDiv.className = 'miniImageContainer';
+        const indexSpan = document.createElement('span');
+        indexSpan.textContent = `#${imageCounter + 1}`;
+        newMiniImageDiv.appendChild(indexSpan);
+        const miniImageCanvas = document.createElement('canvas');
+        miniImageCanvas.className = 'miniImage';
+        miniImageCanvas.width = 128;
+        miniImageCanvas.height = 64;
+        const ctx = miniImageCanvas.getContext('2d');
+        for (let row = 0; row < 8; row++) {
+          for (let col = 0; col < 16; col++) {
+            const color = dotData[row * 16 + col];
+            ctx.fillStyle = color;
+            ctx.fillRect(col * 8, row * 8, 8, 8);
+          }
+        }
+        newMiniImageDiv.appendChild(miniImageCanvas);
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', function() {
+          if (!animationInterval) {
+            miniImagesContainer.removeChild(newMiniImageDiv);
+            imageCounter--;
+            updateMiniImagesIndexes();
+            updateMiniImageSelector();
+          }
+        });
+        newMiniImageDiv.appendChild(deleteButton);
+        const jsonText = document.createElement('pre');
+        jsonText.textContent = JSON.stringify(dotData);
+        newMiniImageDiv.appendChild(jsonText);
+        miniImagesContainer.insertBefore(newMiniImageDiv, miniImageContainer.nextSibling);
+        imageCounter++;
+        updateMiniImagesIndexes();
+        updateMiniImageSelector();
+      }
+    });
+
+    startButton.addEventListener('click', function() {
+      if (!animationInterval) {
+        const switchTime = switchTimeInput.value * 1000;
+        let currentIndex = 0;
+        const dots = document.getElementsByClassName('dot');
+        const images = Array.from(miniImagesContainer.getElementsByClassName('miniImageContainer'));
+        animationInterval = setInterval(function() {
+          const currentImage = images[currentIndex % images.length];
+          const dotData = JSON.parse(currentImage.lastChild.textContent);
+          for (let i = 0; i < dots.length; i++) {
+            dots[i].style.backgroundColor = `rgb(${dotData[i].r}, ${dotData[i].g}, ${dotData[i].b})`; // 背景色を設定する部分を修正
+          }
+          currentImageDisplay.textContent = `Current Image: #${currentIndex % images.length + 1}`;
+          currentIndex++;
+        }, switchTime);
+        okButton.disabled = true;
+        clearButton.disabled = true;
+        insertButton.disabled = true;
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        getButton.disabled = true;
+        miniImageSelector.disabled = true;
+      }
+    });
+
+    stopButton.addEventListener('click', function() {
+      clearInterval(animationInterval);
+      animationInterval = null;
+      okButton.disabled = false;
+      clearButton.disabled = false;
+      insertButton.disabled = false;
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      getButton.disabled = false;
+      miniImageSelector.disabled = false;
+    });
+
+    <!-- Get button click event -->
+    getButton.addEventListener('click', function() {
+      if (!animationInterval) { // アニメーションが実行中でない場合のみ処理を行う
+        const selectedIndex = miniImageSelector.selectedIndex;
+        if (selectedIndex > 0) {
+          const miniImageIndex = selectedIndex - 1;
+          const miniImageContainer = document.querySelectorAll('.miniImageContainer')[miniImageIndex];
+          const miniImageCanvas = miniImageContainer.querySelector('canvas');
+          const ctx = miniImageCanvas.getContext('2d');
+          const dots = document.getElementsByClassName('dot');
+          for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 16; col++) {
+              const color = ctx.getImageData(col * 8, row * 8, 1, 1).data;
+              dots[row * 16 + col].style.backgroundColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`;
+            }
+          }
+        }
+      }
+    });
+
+    // テキストをオブジェクトに変換する関数
+function parseTextToObject(text) {
+    return JSON.parse(text);
+}
+
+        // 送信ボタンのclickイベント
+    submitButton.addEventListener('click', function() {
+      const images = Array.from(miniImagesContainer.getElementsByClassName('miniImageContainer'));
+//      const dataToSend = images.map(image => "data:" + image.lastChild.textContent);
+//      const dataToArray = images.map(image => "data:" + image.lastChild.textContent);
+      const dataToArray = images.map(image => image.lastChild.textContent);
+//      const dataToArray = images.map(image => JSON.stringify(JSON.parse(image.lastChild.textContent)));
+      const objectArray = dataToArray.map(parseTextToObject);
+      console.log(objectArray[0])
+      let dataToSend = {
+        "type" : "rgbData",
+        "dataArray" : objectArray,
+        "maxRow" : 8,
+        "maxCol" : 16,
+        "time" : switchTimeInput.value
+      };
+      console.log(dataToSend)
+      console.log("---")
+      console.log(JSON.stringify(dataToSend))
+      const ws = new WebSocket('ws://' + window.location.hostname + '/ws');
+      ws.onopen = function() {
+        ws.send(JSON.stringify(dataToSend));
+        ws.close();
+      };
+    });
+
+
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 16; col++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.style.backgroundColor = 'rgb(0, 0, 0)';
+        dot.addEventListener('click', function() {
+          const color = document.querySelector('input[name="color"]:checked').value;
+          dot.style.backgroundColor = color;
+        });
+        dotMatrix.appendChild(dot);
+      }
+      dotMatrix.appendChild(document.createElement('br'));
+    }
+  </script>
+</body>
+</html>

@@ -13,6 +13,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include "dotserver.h"
+#include "jsdata.h"
 
 void handleNotFound(AsyncWebServerRequest *request);  // ハンドル設定無し・要求ファイル取得
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
@@ -119,23 +120,40 @@ void handleNotFound(AsyncWebServerRequest *request)
 
 // WebSocketイベントのハンドラ
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  static String receivedData = "";    // 受信データ
   switch(type) {
     case WS_EVT_CONNECT:
       Serial.println("WebSocket client connected");
+      receivedData = "";
       break;
-    case WS_EVT_DISCONNECT:
+    case WS_EVT_DISCONNECT:{
       Serial.println("WebSocket client disconnected");
+      Serial.println(receivedData);
+
+      // ArduinoJsonのためのメモリバッファを定義
+      const size_t bufferSize = JSON_OBJECT_SIZE(10); // 10はオブジェクト内のキーの数
+      StaticJsonDocument<bufferSize> jsonDocument;
+
+      // 受信したJSONデータをパースする
+      DeserializationError error = deserializeJson(jsonDocument, receivedData);
+      if (error) {
+        Serial.print("deserializeJson() failed: ");
+        Serial.println(error.c_str());
+        return;
+      }
+      else{
+        jsData.parseJson(jsonDocument);
+      }
+    }
       break;
     case WS_EVT_DATA:{
-      // 受信データを std::string に変換する
-      std::string receivedData(reinterpret_cast<char*>(data), len);
-      // 受信データを処理する（ここではシリアルに出力するだけ）
-      Serial.printf("Received data: %s\n", receivedData.c_str());
-
-      // クライアントにデータを送信する例
-      // client->text("Received your message");
-      break;
+      for (size_t i = 0; i < len; i++) {
+        receivedData += (char)data[i];
+      }
+//      Serial.println(receivedData);
     }
+      break;
+    
     default:
       break;
   }
