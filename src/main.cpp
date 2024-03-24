@@ -20,6 +20,8 @@
 #include "monitor_real_device.h"
 #include "monitor.h"
 
+#include "matrix_driver.h"
+
 // Specify the number of RGB LEDs (25 for M5Atom Matrix).
 #define NUM_LEDS 25
 // Specify DATA PIN of RGB LEDs.
@@ -59,6 +61,8 @@ void taskDeviceCtrl(void *Parameters){
     RealMonitorDeviseIo real;
     SerialMonitor serialMonitor(&real);
 
+  MatrixDriverMAX72XX mx;   // MAX7219 Matrix Driver
+
   // LED setup
   FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS); // initialize RGB LEDs
   FastLED.setBrightness(10); // set the brightness (more than 20 may break due to heat.)
@@ -93,7 +97,12 @@ void taskDeviceCtrl(void *Parameters){
         }
         portEXIT_CRITICAL(&jsonMutex);
         FastLED.show();
-      
+
+        // MAX7219 Matrix Driver
+        if(!mx.matrixset(jsData.ledAllData[count].ledPageData)){
+          Serial.println("Data Error!");
+        }
+
       }
       else{
         count = 0;
