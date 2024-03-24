@@ -2,3 +2,6 @@
 
 #include "jsdata.h"
 #include "dotserver.h"
+
+#include "monitor_real_device.h"
+#include "monitor.h"
