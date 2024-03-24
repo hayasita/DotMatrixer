@@ -17,6 +17,9 @@
 #include <ArduinoJson.h>
 #include "jsdata.h"
 
+#include "monitor_real_device.h"
+#include "monitor.h"
+
 // Specify the number of RGB LEDs (25 for M5Atom Matrix).
 #define NUM_LEDS 25
 // Specify DATA PIN of RGB LEDs.
@@ -51,6 +54,10 @@ void taskDeviceCtrl(void *Parameters){
   bool ledOnOff = 0;
 
   JsonVariant jsonData;
+
+  // serialMonitor init
+    RealMonitorDeviseIo real;
+    SerialMonitor serialMonitor(&real);
 
   // LED setup
   FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS); // initialize RGB LEDs
@@ -103,6 +110,9 @@ void taskDeviceCtrl(void *Parameters){
       FastLED.show(); // display LEDs
 */
     }
+
+    // シリアルモニタ処理
+    serialMonitor.exec();
 
     delay(1);
   }
