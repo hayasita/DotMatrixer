@@ -11,7 +11,6 @@
 
 #include <M5Unified.h>
 #include <SPIFFS.h>
-#include <FastLED.h> // enable FastLED (RGB LED) library.
 
 #include "dotserver.h"
 #include <ArduinoJson.h>
@@ -21,15 +20,6 @@
 #include "monitor.h"
 
 #include "matrix_driver.h"
-
-// Specify the number of RGB LEDs (25 for M5Atom Matrix).
-#define NUM_LEDS 25
-// Specify DATA PIN of RGB LEDs.
-#define LED_DATA_PIN 27
-
-// global variables (define variables to be used throughout the program)
-//uint32_t count;
-CRGB leds[NUM_LEDS];
 
 //const char* ssid = "**********";
 //const char* password = "**********";
@@ -62,8 +52,7 @@ void taskDeviceCtrl(void *Parameters){
   MatrixDriverMAX72XX mx;   // MAX7219 Matrix Driver
 
   // LED setup
-  FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS); // initialize RGB LEDs
-  FastLED.setBrightness(10); // set the brightness (more than 20 may break due to heat.)
+  M5ATOMMatrixLED m5mx;
 
   int count=0;
 
@@ -81,18 +70,9 @@ void taskDeviceCtrl(void *Parameters){
         if(count >= jsData.size()){
           count = 0;
         }
-        int i,j,num;
-        for(i=0;i<5;i++){
-          for(j=0;j<5;j++){
-            num = i*16+j;
-            leds[i*5+j] = CRGB(
-              jsData.ledAllData[count].ledPageData[num].r,
-              jsData.ledAllData[count].ledPageData[num].g,
-              jsData.ledAllData[count].ledPageData[num].b
-            );
-          }
-        }
-        FastLED.show();
+
+        // M5ATOM Matrix LED 
+        m5mx.matrixset(jsData.getPageData(count));
 
         // MAX7219 Matrix Driver
         if(!mx.matrixset(jsData.getPageData(count))){
