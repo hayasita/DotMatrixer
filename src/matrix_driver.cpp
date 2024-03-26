@@ -19,12 +19,12 @@ MatrixDriverMAX72XX::MatrixDriverMAX72XX(uint8_t col,uint8_t row)
   return;
 }
 
-bool MatrixDriverMAX72XX::matrixset(std::vector<ledColor> data)
+bool MatrixDriverMAX72XX::matrixset(ledData data)
 {
   uint8_t i,j,num;
   bool ret = true;
 
-  if(data.size() != _col*_row){
+  if(data.ledPageData.size() != _col*_row){
     ret = false;
   }
   else{
@@ -33,7 +33,7 @@ bool MatrixDriverMAX72XX::matrixset(std::vector<ledColor> data)
     for(i=0;i<_row;i++){
       for(j=0;j<_col;j++){
         num = i*_col+(_col-1-j);
-        if(data[num].r != 0){
+        if(data.ledPageData[num].r != 0){
           mx.setPoint(i, j, true);
         }
       }
