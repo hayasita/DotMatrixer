@@ -18,20 +18,10 @@
 
 #include "monitor_real_device.h"
 #include "monitor.h"
-
 #include "matrix_driver.h"
 
 //const char* ssid = "**********";
 //const char* password = "**********";
-
-void led(int num ,JsonObject data2)
-{
-  int r = data2["r"];
-  int g = data2["g"];
-  int b = data2["b"];
-
-  leds[num] = CRGB(r, g, b);
-}
 
 /**
  * @brief デバイス制御タスク
@@ -46,8 +36,8 @@ void taskDeviceCtrl(void *Parameters){
   JsonVariant jsonData;
 
   // serialMonitor init
-    RealMonitorDeviseIo real;
-    SerialMonitor serialMonitor(&real);
+  RealMonitorDeviseIo real;
+  SerialMonitor serialMonitor(&real);
 
   MatrixDriverMAX72XX mx;   // MAX7219 Matrix Driver
 
@@ -84,7 +74,7 @@ void taskDeviceCtrl(void *Parameters){
         count = 0;
       }
 
-/*      ledLasttime = timetmp;
+/*
       if(ledOnOff){
         leds[0] = CRGB::Red; // set LED[0] to red
       }
