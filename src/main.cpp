@@ -54,7 +54,7 @@ void taskDeviceCtrl(void *Parameters){
   // LED setup
   M5ATOMMatrixLED m5mx;
 
-  int count=0;
+  uint8_t count=0;
 
   while(1){
     timetmp = millis();               // 処理間隔確認用基本時刻

@@ -16,9 +16,9 @@
  */
 class ledColor{
   public:
-    int r;  // 赤データ
-    int g;  // 緑データ
-    int b;  // 青データ
+    uint8_t r;  // 赤データ
+    uint8_t g;  // 緑データ
+    uint8_t b;  // 青データ
 };
 
 /**
