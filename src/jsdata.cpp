@@ -10,7 +10,12 @@
  */
 
 #include "jsdata.h"
-portMUX_TYPE jsonMutex = portMUX_INITIALIZER_UNLOCKED; // Mutex
+
+jsonData::jsonData(void)
+{
+  jsonMutex = portMUX_INITIALIZER_UNLOCKED; // Mutex
+  return;
+}
 
 /**
  * @brief JSONデータのパース
@@ -60,22 +65,36 @@ void jsonData::parseJson(JsonDocument& jsonDocument)
   return;
 }
 
-void jsonData::setDataArray(JsonVariant& data)
+ledData jsonData::getPageData(uint8_t page)  // 任意のページのLEDデータ取得
 {
-//  portENTER_CRITICAL(&jsonMutex);
-  jsonDataArray = data;
-//  portEXIT_CRITICAL(&jsonMutex);
-
-  return;
+  ledData tmpdata;
+  if((ledAllData.size()-1)>= page){
+    portENTER_CRITICAL(&jsonMutex);
+    tmpdata = ledAllData[page];
+    portEXIT_CRITICAL(&jsonMutex);
+  }
+  return tmpdata;
 }
 
-JsonVariant jsonData::getDataArray(void)
+uint8_t jsonData::size(void)
 {
-  JsonVariant ret;
+  uint8_t ret;
 
-//  portENTER_CRITICAL(&jsonMutex);
-  ret = jsonDataArray;
-//  portEXIT_CRITICAL(&jsonMutex);
+  portENTER_CRITICAL(&jsonMutex);
+  ret = ledAllData.size();
+  portEXIT_CRITICAL(&jsonMutex);
 
-  return(ret);
+  return ret;
 }
+
+uint8_t jsonData::empty(void)
+{
+  uint8_t ret;
+
+  portENTER_CRITICAL(&jsonMutex);
+  ret = ledAllData.empty();
+  portEXIT_CRITICAL(&jsonMutex);
+
+  return ret;
+}
+

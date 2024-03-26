@@ -30,8 +30,6 @@
 // global variables (define variables to be used throughout the program)
 //uint32_t count;
 CRGB leds[NUM_LEDS];
-extern portMUX_TYPE jsonMutex; // Mutex
-
 
 //const char* ssid = "**********";
 //const char* password = "**********";
@@ -75,13 +73,12 @@ void taskDeviceCtrl(void *Parameters){
     if(timetmp - ledLasttime >500){   // 500mSecごとに実行
       ledLasttime = timetmp;
 
-      if(!jsData.ledAllData.empty()){
+      if(!jsData.empty()){
 //        Serial.println("jsonData::");
 //        Serial.println(jsData.ledAllData.size());
 
-        portENTER_CRITICAL(&jsonMutex);
         count++;
-        if(count >= jsData.ledAllData.size()){
+        if(count >= jsData.size()){
           count = 0;
         }
         int i,j,num;
@@ -95,11 +92,10 @@ void taskDeviceCtrl(void *Parameters){
             );
           }
         }
-        portEXIT_CRITICAL(&jsonMutex);
         FastLED.show();
 
         // MAX7219 Matrix Driver
-        if(!mx.matrixset(jsData.ledAllData[count].ledPageData)){
+        if(!mx.matrixset(jsData.getPageData(count))){
           Serial.println("Data Error!");
         }
 
